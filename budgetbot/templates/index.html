@@ -2,8 +2,198 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Investment Chatbot</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investment Chatbot - Budget Buddy</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .chatbot-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .chat-display {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            padding: 12px 16px;
+            border-radius: 18px;
+            max-width: 80%;
+            word-wrap: break-word;
+            animation: fadeInUp 0.3s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .bot-message {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            align-self: flex-start;
+            border-bottom-left-radius: 6px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .user-message {
+            background: linear-gradient(135deg, #11998e, #38ef7d);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 6px;
+            box-shadow: 0 4px 12px rgba(17, 153, 142, 0.3);
+        }
+
+        .input-area {
+            padding: 20px;
+            background: white;
+            display: flex;
+            gap: 10px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        #user-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        #user-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        #send-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+
+        #send-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        #send-btn:active {
+            transform: translateY(0);
+        }
+
+        .chat-display::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-display::-webkit-scrollbar-track {
+            background: #f1f3f4;
+        }
+
+        .chat-display::-webkit-scrollbar-thumb {
+            background: #c1c8cd;
+            border-radius: 3px;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-self: flex-start;
+            padding: 12px 16px;
+            background: #e9ecef;
+            border-radius: 18px;
+            border-bottom-left-radius: 6px;
+            max-width: 80px;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .typing-dots span {
+            width: 8px;
+            height: 8px;
+            background: #6c757d;
+            border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            
+            .chatbot-container {
+                height: calc(100vh - 20px);
+                border-radius: 15px;
+            }
+            
+            .header {
+                font-size: 1.3rem;
+                padding: 15px;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="chatbot-container">
@@ -12,9 +202,16 @@
             <div class="message bot-message">
                 Hello! I'm your personal investment chatbot. How can I help you today? You can ask me for tips, or tell me to "set investment goal to [amount]".
             </div>
+            <div class="typing-indicator" id="typing-indicator">
+                <div class="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
         </div>
         <div class="input-area">
-            <input type="text" id="user-input" placeholder="Type your message...">
+            <input type="text" id="user-input" placeholder="Type your message..." autocomplete="off">
             <button id="send-btn">Send</button>
         </div>
     </div>
@@ -23,42 +220,89 @@
         const chatDisplay = document.getElementById('chat-display');
         const userInput = document.getElementById('user-input');
         const sendBtn = document.getElementById('send-btn');
+        const typingIndicator = document.getElementById('typing-indicator');
+
+        // Investment goal tracking
+        let investmentGoal = null;
+        let currentSavings = 0;
+
+        // Sample investment tips
+        const investmentTips = [
+            "💡 Start investing early to take advantage of compound interest!",
+            "📈 Diversify your portfolio across different asset classes to reduce risk.",
+            "💰 Consider low-cost index funds for long-term growth.",
+            "⏰ Dollar-cost averaging can help reduce the impact of market volatility.",
+            "🎯 Set clear financial goals before making investment decisions.",
+            "📚 Educate yourself about different investment options before investing.",
+            "🛡️ Emergency fund first - aim for 3-6 months of expenses before investing.",
+            "🔄 Rebalance your portfolio periodically to maintain your target allocation.",
+            "📊 Consider your risk tolerance when choosing investments.",
+            "🏦 Take advantage of employer 401(k) matching - it's free money!"
+        ];
 
         function appendMessage(sender, text) {
             const messageDiv = document.createElement('div');
-            messageDiv.classList.add('message', `${sender}-message`);
+            messageDiv.classList.add('message', ${sender}-message);
             messageDiv.innerHTML = text;
             chatDisplay.appendChild(messageDiv);
             chatDisplay.scrollTop = chatDisplay.scrollHeight;
         }
 
-        async function sendMessage() {
-            const message = userInput.value.trim();
-            if (!message) return;
-
-            appendMessage('user', message);
-            userInput.value = '';
-
-            try {
-                const response = await fetch('/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: message })
-                });
-
-                const data = await response.json();
-                appendMessage('bot', data.response);
-            } catch (error) {
-                appendMessage('bot', '⚠️ Sorry, something went wrong. Please try again.');
-            }
+        function showTypingIndicator() {
+            typingIndicator.style.display = 'block';
+            chatDisplay.scrollTop = chatDisplay.scrollHeight;
         }
 
-        sendBtn.addEventListener('click', sendMessage);
-        userInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                sendMessage();
+        function hideTypingIndicator() {
+            typingIndicator.style.display = 'none';
+        }
+
+        function generateResponse(message) {
+            const lowerMessage = message.toLowerCase();
+            
+            // Set investment goal
+            if (lowerMessage.includes('set investment goal to')) {
+                const goalMatch = message.match(/set investment goal to \$?(\d+(?:,\d{3})*(?:\.\d{2})?)/i);
+                if (goalMatch) {
+                    investmentGoal = parseFloat(goalMatch[1].replace(/,/g, ''));
+                    return 🎯 Great! I've set your investment goal to $${investmentGoal.toLocaleString()}. This is an excellent step towards financial planning!;
+                } else {
+                    return "💭 Please specify a valid amount for your investment goal (e.g., 'set investment goal to $10000').";
+                }
             }
-        });
-    </script>
-</body>
-</html>
+            
+            // Check goal progress
+            if (lowerMessage.includes('goal') || lowerMessage.includes('progress')) {
+                if (investmentGoal) {
+                    const progress = (currentSavings / investmentGoal) * 100;
+                    return 📊 Your investment goal: $${investmentGoal.toLocaleString()}<br>Current progress: ${progress.toFixed(1)}%<br>Keep going! You're on the right track! 💪;
+                } else {
+                    return "🎯 You haven't set an investment goal yet. Try saying 'set investment goal to [amount]' to get started!";
+                }
+            }
+            
+            // Investment tips
+            if (lowerMessage.includes('tip') || lowerMessage.includes('advice') || lowerMessage.includes('help')) {
+                const randomTip = investmentTips[Math.floor(Math.random() * investmentTips.length)];
+                return randomTip;
+            }
+            
+            // Risk assessment
+            if (lowerMessage.includes('risk')) {
+                return "⚖️ Risk tolerance is crucial in investing:<br>• <strong>Conservative:</strong> Bonds, CDs, savings accounts<br>• <strong>Moderate:</strong> Balanced funds, blue-chip stocks<br>• <strong>Aggressive:</strong> Growth stocks, emerging markets<br><br>What's your risk tolerance?";
+            }
+            
+            // Budgeting advice
+            if (lowerMessage.includes('budget') || lowerMessage.includes('save')) {
+                return "💰 Budgeting tips:<br>• Follow the 50/30/20 rule (needs/wants/savings)<br>• Track your expenses for a month<br>• Automate your savings<br>• Cut unnecessary subscriptions<br>• Cook at home more often<br><br>Would you like specific budgeting strategies?";
+            }
+            
+            // Emergency fund
+            if (lowerMessage.includes('emergency')) {
+                return "🚨 Emergency funds are essential!<br>• Aim for 3-6 months of expenses<br>• Keep it in a high-yield savings account<br>• Don't invest emergency funds<br>• Build it before investing<br><br>How many months of expenses do you have saved?";
+            }
+            
+            // Default response
+            const responses = [
+                "🤔 That's interesting! Could you be more specific about what investment topic you'd like to discuss?",
+                "💡 I'm here to help with investment advice! Try asking for tips, setting a goal, or discussing risk tolerance
